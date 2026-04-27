@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="A browser-based 3D world flight simulator with real map tiles, selectable aircraft, and G1000-style avionics."
+    />
+    <title>World Flight Simulator</title>
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="world"></canvas>
+
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark"></span>
+          <div>
+            <strong>World Flight Simulator</strong>
+            <span id="positionReadout">KJFK 40.6413, -73.7781</span>
+          </div>
+        </div>
+
+        <div class="toolbar" role="group" aria-label="Simulator tools">
+          <button class="icon-button" id="pauseButton" type="button" aria-label="Pause simulation" title="Pause">
+            <i data-lucide="pause"></i>
+          </button>
+          <button class="icon-button" id="cameraButton" type="button" aria-label="Change camera" title="Camera">
+            <i data-lucide="camera"></i>
+          </button>
+          <button class="icon-button" id="weatherButton" type="button" aria-label="Cycle weather" title="Weather">
+            <i data-lucide="cloud-sun"></i>
+          </button>
+          <button class="icon-button" id="mapButton" type="button" aria-label="Cycle map layer" title="Map layer">
+            <i data-lucide="map"></i>
+          </button>
+        </div>
+      </header>
+
+      <main class="sim-ui" aria-label="Flight deck">
+        <section class="g1000-panel" aria-label="G1000 flight deck">
+          <div class="bezel">
+            <div class="screen screen-pfd">
+              <div class="screen-header">
+                <span id="aircraftName">Cessna 172S Skyhawk</span>
+                <span id="annunciator">BAT OFF</span>
+              </div>
+              <div class="pfd-grid">
+                <div class="tape tape-speed">
+                  <span>IAS</span>
+                  <strong id="iasReadout">0</strong>
+                  <small>KT</small>
+                </div>
+                <div class="attitude" id="attitudeBall">
+                  <div class="sky"></div>
+                  <div class="ground"></div>
+                  <div class="horizon"></div>
+                  <div class="wings"></div>
+                  <span id="pitchReadout">0 deg</span>
+                </div>
+                <div class="tape tape-alt">
+                  <span>ALT</span>
+                  <strong id="altReadout">120</strong>
+                  <small>FT</small>
+                </div>
+              </div>
+              <div class="lower-row">
+                <div>
+                  <span>HDG</span>
+                  <strong id="headingReadout">044</strong>
+                </div>
+                <div>
+                  <span>VS</span>
+                  <strong id="vsReadout">0</strong>
+                </div>
+                <div>
+                  <span>FPM</span>
+                  <strong id="fpmReadout">0.0</strong>
+                </div>
+              </div>
+            </div>
+
+            <div class="screen screen-mfd">
+              <div class="screen-header">
+                <span>MFD</span>
+                <span id="mapLayerReadout">OSM</span>
+              </div>
+              <canvas id="navMap" width="420" height="260"></canvas>
+              <div class="engine-stack">
+                <div class="engine-bar"><span>N1/RPM</span><meter id="rpmMeter" min="0" max="110" value="0"></meter><b id="rpmReadout">0%</b></div>
+                <div class="engine-bar"><span>FUEL</span><meter id="fuelMeter" min="0" max="100" value="100"></meter><b id="fuelReadout">100%</b></div>
+                <div class="engine-bar"><span>EGT</span><meter id="egtMeter" min="0" max="100" value="0"></meter><b id="egtReadout">0%</b></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <aside class="systems-panel" aria-label="Aircraft controls">
+          <div class="tabs" role="tablist" aria-label="Control pages">
+            <button class="tab active" data-panel="aircraft" type="button">Aircraft</button>
+            <button class="tab" data-panel="systems" type="button">Systems</button>
+            <button class="tab" data-panel="autopilot" type="button">AP</button>
+          </div>
+
+          <div class="panel-page active" id="panel-aircraft">
+            <label class="control-group">
+              <span>Airframe</span>
+              <select id="aircraftSelect">
+                <option value="c172">Cessna 172S Skyhawk</option>
+                <option value="sr22">Cirrus SR22T</option>
+                <option value="tbm">Daher TBM 930</option>
+                <option value="citation">Citation CJ4</option>
+              </select>
+            </label>
+            <label class="control-group">
+              <span>Departure</span>
+              <select id="locationSelect">
+                <option value="jfk">New York JFK</option>
+                <option value="sfo">San Francisco Bay</option>
+                <option value="london">London City</option>
+                <option value="tokyo">Tokyo Haneda</option>
+                <option value="sydney">Sydney Harbour</option>
+              </select>
+            </label>
+            <label class="control-group">
+              <span>Throttle</span>
+              <input id="throttleSlider" type="range" min="0" max="100" value="0" />
+            </label>
+            <label class="control-group prop-control">
+              <span id="propLabel">Prop</span>
+              <input id="propSlider" type="range" min="0" max="100" value="100" />
+            </label>
+            <label class="control-group">
+              <span id="mixtureLabel">Mixture</span>
+              <input id="mixtureSlider" type="range" min="0" max="100" value="100" />
+            </label>
+            <div class="segmented" role="group" aria-label="Flaps">
+              <button data-flaps="0" class="active" type="button">0</button>
+              <button data-flaps="10" type="button">10</button>
+              <button data-flaps="20" type="button">20</button>
+              <button data-flaps="30" type="button">30</button>
+            </div>
+          </div>
+
+          <div class="panel-page" id="panel-systems">
+            <div class="switch-grid">
+              <label><input id="batterySwitch" type="checkbox" /> BAT</label>
+              <label><input id="alternatorSwitch" type="checkbox" /> ALT</label>
+              <label><input id="avionicsSwitch" type="checkbox" /> AVN</label>
+              <label><input id="fuelPumpSwitch" type="checkbox" /> PUMP</label>
+              <label><input id="pitotSwitch" type="checkbox" /> PITOT</label>
+              <label><input id="antiIceSwitch" type="checkbox" /> ICE</label>
+            </div>
+            <div class="button-row">
+              <button id="starterButton" class="command-button" type="button">
+                <i data-lucide="power"></i>
+                <span>Start</span>
+              </button>
+              <button id="gearButton" class="command-button" type="button">
+                <i data-lucide="chevrons-up"></i>
+                <span>Gear</span>
+              </button>
+            </div>
+            <label class="control-group">
+              <span>Fuel tank</span>
+              <select id="fuelTankSelect">
+                <option value="both">Both</option>
+                <option value="left">Left</option>
+                <option value="right">Right</option>
+              </select>
+            </label>
+            <div class="status-grid">
+              <span>Oil</span><strong id="oilReadout">38 C</strong>
+              <span>Bus</span><strong id="busReadout">0 V</strong>
+              <span>Gear</span><strong id="gearReadout">DOWN</strong>
+            </div>
+          </div>
+
+          <div class="panel-page" id="panel-autopilot">
+            <div class="switch-grid ap-grid">
+              <label><input id="apMaster" type="checkbox" /> AP</label>
+              <label><input id="hdgMode" type="checkbox" /> HDG</label>
+              <label><input id="altMode" type="checkbox" /> ALT</label>
+              <label><input id="vsMode" type="checkbox" /> VS</label>
+              <label><input id="navMode" type="checkbox" /> NAV</label>
+              <label><input id="fdMode" type="checkbox" /> FD</label>
+            </div>
+            <label class="control-group">
+              <span>Selected heading</span>
+              <input id="headingBug" type="range" min="0" max="359" value="44" />
+            </label>
+            <label class="control-group">
+              <span>Selected altitude</span>
+              <input id="altitudeBug" type="range" min="500" max="41000" step="100" value="3500" />
+            </label>
+            <label class="control-group">
+              <span>Vertical speed</span>
+              <input id="vsBug" type="range" min="-2500" max="2500" step="100" value="500" />
+            </label>
+            <div class="status-grid">
+              <span>HDG SEL</span><strong id="headingBugReadout">044</strong>
+              <span>ALT SEL</span><strong id="altitudeBugReadout">3500</strong>
+              <span>VS SEL</span><strong id="vsBugReadout">+500</strong>
+            </div>
+          </div>
+        </aside>
+      </main>
+
+      <div class="mobile-yoke" aria-label="Touch yoke">
+        <div id="touchPad"><span></span></div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
