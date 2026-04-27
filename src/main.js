@@ -3,13 +3,14 @@ import replaceElement from 'lucide/dist/esm/replaceElement.js';
 import Camera from 'lucide/dist/esm/icons/camera.js';
 import ChevronsUp from 'lucide/dist/esm/icons/chevrons-up.js';
 import CloudSun from 'lucide/dist/esm/icons/cloud-sun.js';
-import Map from 'lucide/dist/esm/icons/map.js';
+import MapIcon from 'lucide/dist/esm/icons/map.js';
 import Pause from 'lucide/dist/esm/icons/pause.js';
 import Play from 'lucide/dist/esm/icons/play.js';
 import Power from 'lucide/dist/esm/icons/power.js';
+import SlidersHorizontal from 'lucide/dist/esm/icons/sliders-horizontal.js';
 import './styles.css';
 
-const icons = { Camera, ChevronsUp, CloudSun, Map, Pause, Play, Power };
+const icons = { Camera, ChevronsUp, CloudSun, Map: MapIcon, Pause, Play, Power, SlidersHorizontal };
 const iconAttrs = {
   'stroke-width': 1.8,
   width: 18,
@@ -129,7 +130,7 @@ const locations = {
 };
 
 const weatherPresets = [
-  { name: 'Clear', haze: 0.006, wind: 4, gust: 0.4, crosswind: 0.2, cloud: 0.12, light: 1 },
+  { name: 'Clear', haze: 0.0015, wind: 4, gust: 0.4, crosswind: 0.2, cloud: 0.12, light: 1 },
   { name: 'Broken', haze: 0.018, wind: 13, gust: 1.2, crosswind: 0.45, cloud: 0.45, light: 0.86 },
   { name: 'IFR', haze: 0.044, wind: 22, gust: 2.1, crosswind: 0.8, cloud: 0.75, light: 0.7 },
 ];
@@ -160,6 +161,14 @@ const els = {
   cameraButton: document.querySelector('#cameraButton'),
   weatherButton: document.querySelector('#weatherButton'),
   mapButton: document.querySelector('#mapButton'),
+  panelButton: document.querySelector('#panelButton'),
+  simUi: document.querySelector('.sim-ui'),
+  hudIas: document.querySelector('#hudIas'),
+  hudAlt: document.querySelector('#hudAlt'),
+  hudHeading: document.querySelector('#hudHeading'),
+  hudAircraft: document.querySelector('#hudAircraft'),
+  hudThrottle: document.querySelector('#hudThrottle'),
+  hudStatus: document.querySelector('#hudStatus'),
   aircraftName: document.querySelector('#aircraftName'),
   annunciator: document.querySelector('#annunciator'),
   ias: document.querySelector('#iasReadout'),
@@ -227,7 +236,7 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x9ec8ef);
-scene.fog = new THREE.FogExp2(0x9fb9c8, 0.006);
+scene.fog = new THREE.FogExp2(0x9fb9c8, 0.0015);
 
 const camera = new THREE.PerspectiveCamera(54, window.innerWidth / window.innerHeight, 0.1, 36000);
 camera.position.set(0, 18, 42);
@@ -281,16 +290,16 @@ const sim = {
   lon: locations.jfk.lon,
   localEast: 0,
   localNorth: 0,
-  altitude: 36.5,
+  altitude: 13.3,
   terrainElevation: 12,
   groundSpeed: 0,
   verticalSpeed: 0,
   trueAirspeed: 0,
   heading: locations.jfk.heading,
-  pitch: 0,
+  pitch: 0.03,
   roll: 0,
   yawRate: 0,
-  throttle: 0,
+  throttle: 0.68,
   prop: 1,
   mixture: 1,
   flaps: 0,
@@ -298,18 +307,18 @@ const sim = {
   fuel: 1,
   leftFuel: 0.5,
   rightFuel: 0.5,
-  battery: false,
-  alternator: false,
-  avionics: false,
-  fuelPump: false,
+  battery: true,
+  alternator: true,
+  avionics: true,
+  fuelPump: true,
   pitotHeat: false,
   antiIce: false,
   starter: false,
-  engineRunning: false,
-  engineSpool: 0,
-  oilTemp: 16,
-  egt: 0,
-  busVoltage: 0,
+  engineRunning: true,
+  engineSpool: 0.72,
+  oilTemp: 84,
+  egt: 68,
+  busVoltage: 28.1,
   ap: {
     master: false,
     hdg: false,
@@ -370,9 +379,12 @@ function createFallbackTileTexture(x, y, z) {
   canvas.height = 256;
   const ctx = canvas.getContext('2d');
   const hue = (x * 19 + y * 11 + z * 29) % 360;
-  ctx.fillStyle = `hsl(${hue}, 25%, 32%)`;
+  ctx.fillStyle = `hsl(${hue}, 28%, 44%)`;
   ctx.fillRect(0, 0, 256, 256);
-  ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+  ctx.fillStyle = 'rgba(59, 95, 67, 0.34)';
+  ctx.fillRect(0, 0, 114, 256);
+  ctx.fillRect(152, 0, 104, 256);
+  ctx.strokeStyle = 'rgba(245,255,247,0.32)';
   ctx.lineWidth = 1;
   for (let i = 0; i <= 256; i += 32) {
     ctx.beginPath();
@@ -384,6 +396,18 @@ function createFallbackTileTexture(x, y, z) {
     ctx.lineTo(256, i);
     ctx.stroke();
   }
+  ctx.strokeStyle = 'rgba(255,255,255,0.68)';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(-20, 74 + ((x + y) % 5) * 9);
+  ctx.bezierCurveTo(58, 42, 126, 112, 276, 88);
+  ctx.stroke();
+  ctx.strokeStyle = 'rgba(242, 211, 128, 0.72)';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(44 + (x % 6) * 8, -20);
+  ctx.lineTo(102 + (y % 7) * 11, 276);
+  ctx.stroke();
   ctx.fillStyle = 'rgba(255,255,255,0.74)';
   ctx.font = 'bold 22px system-ui';
   ctx.fillText(`${z}/${x}`, 18, 42);
@@ -453,9 +477,9 @@ function updateTerrain(force = false) {
         const px = position.getX(i);
         const py = position.getY(i);
         const wave =
-          Math.sin((px + tx * 41) * 0.006) * 3.4 +
-          Math.cos((py + ty * 31) * 0.005) * 2.2;
-        position.setZ(i, wave - 1.5);
+          Math.sin((px + tx * 41) * 0.006) * 0.55 +
+          Math.cos((py + ty * 31) * 0.005) * 0.35;
+        position.setZ(i, wave - 0.35);
       }
       geometry.computeVertexNormals();
       const tile = new THREE.Mesh(geometry, getTileMaterial(tx, ty, WORLD_ZOOM));
@@ -698,25 +722,71 @@ function createAircraftModel(profile) {
   noseWheel.position.set(fuselageLength * 0.32, -0.85, 0);
   aircraftGroup.add(noseWheel);
 
-  aircraftGroup.scale.setScalar(profile.category === 'Light jet' ? 1.65 : profile.category === 'Turboprop' ? 1.35 : 1.18);
+  aircraftGroup.scale.setScalar(profile.category === 'Light jet' ? 2.45 : profile.category === 'Turboprop' ? 2.05 : 1.78);
   aircraftGroup.position.set(0, sim.altitude, 0);
+}
+
+function setReadyToFly({ airborne = false } = {}) {
+  const cruiseKt = clamp(
+    Math.max(sim.profile.rotation + 28, sim.profile.maxSpeed * 0.58),
+    sim.profile.rotation + 18,
+    sim.profile.maxSpeed * 0.82,
+  );
+
+  sim.throttle = 0.68;
+  sim.prop = 1;
+  sim.mixture = 1;
+  sim.flaps = airborne ? 0 : 10;
+  sim.gearDown = sim.profile.gear === 'fixed' ? true : !airborne;
+  sim.battery = true;
+  sim.alternator = true;
+  sim.avionics = true;
+  sim.fuelPump = true;
+  sim.engineRunning = true;
+  sim.engineSpool = 0.72;
+  sim.oilTemp = 84;
+  sim.egt = 68;
+  sim.busVoltage = 28.1;
+
+  if (airborne) {
+    sim.altitude = sim.terrainElevation + 220;
+    sim.groundSpeed = cruiseKt / MS_TO_KT;
+    sim.trueAirspeed = sim.groundSpeed;
+    sim.verticalSpeed = 0;
+    sim.pitch = 0.025;
+    sim.roll = 0;
+  } else {
+    sim.altitude = sim.terrainElevation + 1.35;
+    sim.groundSpeed = 0;
+    sim.trueAirspeed = 0;
+    sim.verticalSpeed = 0;
+    sim.pitch = 0.015;
+    sim.roll = 0;
+  }
+
+  els.throttle.value = String(Math.round(sim.throttle * 100));
+  els.prop.value = String(Math.round(sim.prop * 100));
+  els.mixture.value = String(Math.round(sim.mixture * 100));
+  els.battery.checked = sim.battery;
+  els.alternator.checked = sim.alternator;
+  els.avionics.checked = sim.avionics;
+  els.fuelPump.checked = sim.fuelPump;
+  els.flaps.forEach((item) => item.classList.toggle('active', Number(item.dataset.flaps) === sim.flaps));
 }
 
 function applyAircraftProfile(id) {
   sim.aircraftId = id;
   sim.profile = aircraftProfiles[id];
-  sim.engineRunning = false;
-  sim.engineSpool = 0;
-  sim.throttle = 0;
   sim.prop = sim.profile.category === 'Light jet' ? 1 : sim.prop;
   sim.mixture = sim.profile.category === 'Light jet' ? 1 : sim.mixture;
-  sim.gearDown = sim.profile.gear === 'fixed' ? true : sim.gearDown;
+  sim.gearDown = sim.profile.gear === 'fixed' ? true : sim.altitude <= sim.terrainElevation + 50;
   sim.groundSpeed = Math.min(sim.groundSpeed, sim.profile.maxSpeed / MS_TO_KT);
   els.aircraftName.textContent = sim.profile.name;
-  els.throttle.value = '0';
+  els.hudAircraft.textContent = sim.profile.name;
   els.propLabel.textContent = sim.profile.category === 'Light jet' ? 'N1 sync' : 'Prop';
   els.mixtureLabel.textContent = sim.profile.category === 'Turboprop' ? 'Condition' : sim.profile.category === 'Light jet' ? 'Fuel flow' : 'Mixture';
   createAircraftModel(sim.profile);
+  setReadyToFly();
 }
 
 function resetToLocation(id) {
@@ -727,14 +797,9 @@ function resetToLocation(id) {
   sim.heading = sim.location.heading;
   sim.localEast = 0;
   sim.localNorth = 0;
-  sim.altitude = sim.terrainElevation + 1.3;
-  sim.verticalSpeed = 0;
-  sim.groundSpeed = 0;
-  sim.trueAirspeed = 0;
-  sim.pitch = 0;
-  sim.roll = 0;
   sim.ap.headingBug = sim.heading;
   els.headingBug.value = String(Math.round(sim.heading));
+  setReadyToFly();
   tileCenterKey = '';
   updateTerrain(true);
 }
@@ -923,25 +988,30 @@ function updateAircraftVisuals(dt) {
 
 function updateCamera(dt) {
   const heading = sim.heading * DEG;
-  const back = new THREE.Vector3(-Math.sin(heading), 0, -Math.cos(heading));
+  const forward = new THREE.Vector3(Math.sin(heading), 0, Math.cos(heading));
   const side = new THREE.Vector3(Math.cos(heading), 0, -Math.sin(heading));
   const up = new THREE.Vector3(0, 1, 0);
-  const target = reusable.cameraTarget.set(0, sim.altitude + 1.6, 0);
+  const plane = reusable.cameraTarget.set(0, sim.altitude + 1.4, 0);
+  const heightAgl = sim.altitude - sim.terrainElevation;
+  const target = plane
+    .clone()
+    .addScaledVector(forward, heightAgl < 35 ? 42 : 38)
+    .addScaledVector(up, heightAgl < 35 ? -1 : -20);
   let desired;
   if (sim.cameraMode === 0) {
     desired = reusable.cameraPosition
-      .copy(target)
-      .addScaledVector(back, 32)
-      .addScaledVector(side, 4.5)
-      .addScaledVector(up, 10 + clamp(sim.groundSpeed * 0.08, 0, 22));
+      .copy(plane)
+      .addScaledVector(forward, heightAgl < 35 ? -56 : -28)
+      .addScaledVector(side, 4.2)
+      .addScaledVector(up, heightAgl < 35 ? 13 : 15 + clamp(sim.groundSpeed * 0.02, 0, 7));
   } else if (sim.cameraMode === 1) {
     desired = reusable.cameraPosition
-      .copy(target)
-      .addScaledVector(back, -8)
+      .copy(plane)
+      .addScaledVector(forward, 7)
       .addScaledVector(up, 2.2);
   } else {
     desired = reusable.cameraPosition
-      .copy(target)
+      .copy(plane)
       .addScaledVector(side, 64)
       .addScaledVector(up, 24);
   }
@@ -972,6 +1042,14 @@ function updateG1000() {
   els.ias.textContent = String(airspeed);
   els.alt.textContent = String(altitudeFt);
   els.heading.textContent = String(Math.round(sim.heading)).padStart(3, '0');
+  els.hudIas.textContent = String(airspeed);
+  els.hudAlt.textContent = String(altitudeFt);
+  els.hudHeading.textContent = String(Math.round(sim.heading)).padStart(3, '0');
+  els.hudThrottle.textContent = `${Math.round(sim.throttle * 100)}%`;
+  els.hudAircraft.textContent = sim.profile.name;
+  els.hudStatus.textContent = sim.engineRunning
+    ? `${sim.altitude - sim.terrainElevation < 35 ? 'RUNWAY' : weatherPresets[sim.weatherIndex].name.toUpperCase()} / ${mapLayers[sim.mapLayerIndex].label}`
+    : 'ENGINE OFF';
   els.vs.textContent = String(vsFpm);
   els.fpm.textContent = fpm;
   els.pitch.textContent = `${Math.round(sim.pitch * RAD)} deg`;
@@ -1096,6 +1174,11 @@ function bindUi() {
   });
   els.cameraButton.addEventListener('click', () => {
     sim.cameraMode = (sim.cameraMode + 1) % 3;
+  });
+  els.panelButton.addEventListener('click', () => {
+    const isOpen = els.simUi.classList.toggle('is-open');
+    els.panelButton.classList.toggle('active', isOpen);
+    document.body.classList.toggle('panels-open', isOpen);
   });
   els.weatherButton.addEventListener('click', () => {
     sim.weatherIndex = (sim.weatherIndex + 1) % weatherPresets.length;

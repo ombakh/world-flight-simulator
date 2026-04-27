@@ -35,8 +35,36 @@
           <button class="icon-button" id="mapButton" type="button" aria-label="Cycle map layer" title="Map layer">
             <i data-lucide="map"></i>
           </button>
+          <button class="icon-button" id="panelButton" type="button" aria-label="Toggle cockpit panels" title="Cockpit">
+            <i data-lucide="sliders-horizontal"></i>
+          </button>
         </div>
       </header>
+
+      <section class="flight-hud" aria-label="Primary flight display">
+        <div class="hud-cell">
+          <span>IAS</span>
+          <strong id="hudIas">0</strong>
+          <small>KT</small>
+        </div>
+        <div class="hud-cell">
+          <span>ALT</span>
+          <strong id="hudAlt">0</strong>
+          <small>FT</small>
+        </div>
+        <div class="hud-cell">
+          <span>HDG</span>
+          <strong id="hudHeading">000</strong>
+          <small>MAG</small>
+        </div>
+        <div class="hud-cell hud-wide">
+          <span id="hudAircraft">Cessna 172S Skyhawk</span>
+          <strong id="hudThrottle">68%</strong>
+          <small id="hudStatus">READY TO FLY</small>
+        </div>
+      </section>
+
+      <div class="center-reticle" aria-hidden="true"><span></span></div>
 
       <main class="sim-ui" aria-label="Flight deck">
         <section class="g1000-panel" aria-label="G1000 flight deck">

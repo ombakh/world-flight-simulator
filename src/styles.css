@@ -163,21 +163,147 @@ button {
   transform: translateY(1px);
 }
 
+.icon-button.active {
+  background: rgba(77, 171, 247, 0.26);
+  border-color: rgba(77, 171, 247, 0.62);
+}
+
+.flight-hud {
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+  z-index: 8;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(82px, auto));
+  gap: 8px;
+  opacity: 1;
+  pointer-events: none;
+  transition: opacity 140ms ease;
+}
+
+body.panels-open .flight-hud {
+  opacity: 0;
+}
+
+.hud-cell {
+  min-width: 82px;
+  padding: 9px 10px;
+  border: 1px solid rgba(238, 245, 241, 0.2);
+  border-radius: 8px;
+  background: rgba(7, 13, 15, 0.64);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.24);
+  backdrop-filter: blur(14px) saturate(1.12);
+}
+
+.hud-cell span,
+.hud-cell small {
+  display: block;
+  color: rgba(238, 245, 241, 0.7);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.hud-cell strong {
+  display: block;
+  color: #ffffff;
+  font-size: 25px;
+  line-height: 1;
+  margin: 4px 0 2px;
+}
+
+.hud-wide {
+  min-width: 190px;
+}
+
+.center-reticle {
+  position: fixed;
+  left: 50%;
+  top: 46%;
+  z-index: 7;
+  width: 92px;
+  height: 54px;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+.center-reticle::before,
+.center-reticle::after,
+.center-reticle span::before,
+.center-reticle span::after {
+  position: absolute;
+  content: "";
+  background: rgba(255, 212, 59, 0.86);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.42);
+}
+
+.center-reticle::before,
+.center-reticle::after {
+  top: 50%;
+  width: 32px;
+  height: 3px;
+}
+
+.center-reticle::before {
+  left: 0;
+}
+
+.center-reticle::after {
+  right: 0;
+}
+
+.center-reticle span::before {
+  left: 50%;
+  top: 16px;
+  width: 3px;
+  height: 20px;
+  transform: translateX(-50%);
+}
+
+.center-reticle span::after {
+  left: 50%;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
 .sim-ui {
   position: fixed;
   inset: auto 0 0 0;
   z-index: 9;
-  display: grid;
+  display: none;
   grid-template-columns: minmax(480px, 760px) minmax(270px, 340px);
   align-items: end;
   justify-content: space-between;
   gap: 14px;
   padding: 0 16px 16px;
+  opacity: 0;
   pointer-events: none;
+  transform: translateY(22px);
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease,
+    visibility 160ms ease;
+  visibility: hidden;
+}
+
+.sim-ui.is-open {
+  display: grid;
+  opacity: 1;
+  transform: translateY(0);
+  visibility: visible;
 }
 
 .g1000-panel,
 .systems-panel {
+  pointer-events: none;
+}
+
+.sim-ui.is-open .g1000-panel,
+.sim-ui.is-open .systems-panel {
   pointer-events: auto;
 }
 
@@ -604,10 +730,11 @@ input[type="range"] {
 @media (max-width: 760px) {
   .topbar {
     padding: 8px;
+    gap: 6px;
   }
 
   .brand {
-    max-width: calc(100vw - 188px);
+    max-width: calc(100vw - 244px);
     padding: 8px;
   }
 
@@ -615,14 +742,45 @@ input[type="range"] {
     font-size: 12px;
   }
 
+  .brand span:last-child {
+    display: none;
+  }
+
   .toolbar {
-    gap: 5px;
-    padding: 6px;
+    gap: 4px;
+    padding: 5px;
   }
 
   .icon-button {
-    width: 34px;
-    height: 34px;
+    width: 30px;
+    height: 30px;
+  }
+
+  .flight-hud {
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .hud-cell {
+    min-width: 0;
+    padding: 8px;
+  }
+
+  .hud-cell strong {
+    font-size: 22px;
+  }
+
+  .hud-wide {
+    grid-column: 1 / -1;
+    min-width: 0;
+  }
+
+  .center-reticle {
+    top: 40%;
+    width: 76px;
   }
 
   .sim-ui {
@@ -671,23 +829,21 @@ input[type="range"] {
 
   .mobile-yoke {
     display: block;
-    top: 144px;
+    top: 120px;
+    right: 12px;
     bottom: auto;
+    width: 88px;
+    height: 88px;
   }
 }
 
 @media (max-width: 480px) {
   .brand {
-    max-width: calc(100vw - 164px);
+    max-width: calc(100vw - 204px);
   }
 
   .brand-mark {
     display: none;
-  }
-
-  .toolbar .icon-button {
-    width: 31px;
-    height: 31px;
   }
 
   .pfd-grid {
@@ -704,10 +860,10 @@ input[type="range"] {
   }
 
   .mobile-yoke {
-    right: 10px;
-    top: 132px;
+    right: 8px;
+    top: 116px;
     bottom: auto;
-    width: 96px;
-    height: 96px;
+    width: 84px;
+    height: 84px;
   }
 }
