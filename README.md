@@ -1,16 +1,15 @@
-# World Flight Simulator
+# TensorFlow Camera Object Detector
 
-A browser-based 3D flight simulator built with JavaScript, Vite, and Three.js.
+A browser-based object detection app built with Vite, TensorFlow.js, and the COCO-SSD model. It opens the computer camera, detects common objects in real time, draws bounding boxes over the live feed, and lists detected objects with confidence scores.
 
 ## Features
 
-- Real-world map tile terrain using slippy-map coordinates
-- Selectable aircraft: Cessna 172S, Cirrus SR22T, Daher TBM 930, and Citation CJ4
-- G1000-style PFD/MFD cockpit display
-- Engine, fuel, electrical, avionics, gear, flaps, anti-ice, and pitot systems
-- Autopilot modes for heading, altitude, vertical speed, and navigation
-- Responsive desktop and mobile layouts with a touch yoke
-- GitHub Pages deployment through GitHub Actions
+- Live camera access through `getUserMedia`
+- TensorFlow.js object detection with `@tensorflow-models/coco-ssd`
+- Bounding boxes and confidence labels drawn on a canvas overlay
+- Adjustable minimum confidence threshold
+- Start, stop, and camera-switch controls
+- Responsive layout for desktop and mobile browsers
 
 ## Local Development
 
@@ -18,6 +17,8 @@ A browser-based 3D flight simulator built with JavaScript, Vite, and Three.js.
 npm install
 npm run dev
 ```
+
+Open the local URL shown by Vite. The app must run from `localhost`, `127.0.0.1`, or HTTPS for browser camera access.
 
 ## Production Build
 
